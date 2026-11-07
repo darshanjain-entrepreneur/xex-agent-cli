@@ -22,10 +22,49 @@ Created and maintained by **[Darshan Jain](https://github.com/darshanjain-entrep
 
 Requirements: Node.js `18.18` or newer.
 
+### Install from npm
+
+Install the package globally to make the `xex` command available from any terminal:
+
 ```bash
 npm install -g xex-agent-cli
 xex --help
 ```
+
+The npm package contains the compiled CLI in `dist/`. npm creates the `xex` command from the `bin` entry in `package.json`; you do not need to run `npm run build` after installing from npm.
+
+### Configure an npm installation
+
+The npm package is the program, not your provider configuration. Create `.env` in the project folder where you will run `xex`, not inside the global npm installation folder:
+
+**Windows PowerShell:**
+
+```powershell
+mkdir my-ai-project
+cd my-ai-project
+npx --yes --package=xex-agent-cli node -e "require('fs').copyFileSync(require.resolve('xex-agent-cli/.env.example'), '.env.example')"
+Copy-Item .env.example .env
+notepad .env
+```
+
+**macOS/Linux:**
+
+```bash
+mkdir my-ai-project
+cd my-ai-project
+npm pack xex-agent-cli --pack-destination .
+tar -xzf xex-agent-cli-*.tgz --strip-components=1 package/.env.example
+cp .env.example .env
+nano .env
+```
+
+Alternatively, copy the `.env.example` file from the [GitHub repository](https://github.com/darshanjain-entrepreneur/xex-agent-cli/blob/main/.env.example) into your project folder. Add your provider key to `.env`, then run:
+
+```bash
+xex "Inspect this project and explain its structure"
+```
+
+`xex` automatically reads `.env` from the current working directory. Keep `.env` private; it is for your local machine and must never be committed or shared.
 
 For development from source:
 

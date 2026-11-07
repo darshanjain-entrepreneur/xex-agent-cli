@@ -6,7 +6,7 @@
   "bin": {
     "xex": "dist/cli.js"
   },
-  "files": ["dist", "README.md"],
+  "files": ["dist", "README.md", ".env.example"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/cli.ts",
