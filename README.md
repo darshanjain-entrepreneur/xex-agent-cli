@@ -1,16 +1,76 @@
 # xex-agent-cli
 
-A strict TypeScript terminal coding agent with OpenRouter chat completions, multi-step tool calling, filesystem and process tools, structured results, and interactive permission prompts.
+> A trust-focused AI agent for coding and computer tasks from your terminal.
 
-## Setup
+`xex` lets you use an AI model to inspect projects, work with files, run approved commands, review Git changes, and automate supported browser tasks. It is designed around visibility and user control: actions can require approval, secrets are detected and redacted, changes can be undone, and the agent reports what it can and cannot safely do.
 
-```sh
+Created and maintained by **[Darshan Jain](https://github.com/darshanjain-entrepreneur)**.
+
+## Highlights
+
+- **Multi-provider AI:** OpenRouter, OpenAI, Anthropic, Gemini, and local OpenAI-compatible endpoints.
+- **Computer and coding tools:** Read, create, edit, copy, move, delete, search, and inspect project files.
+- **Command execution:** Run processes and shell commands with timeouts, output limits, approvals, and a denylist.
+- **Git and project workflows:** Inspect diffs, review repositories, and run project checks without implicit commits.
+- **Trust controls:** Explain-before-execute, approval modes, action timelines, trust summaries, and progress output.
+- **Privacy protection:** Detect and redact API keys, tokens, passwords, private keys, and other secret-like values.
+- **Undo and auditability:** File snapshots, task-level undo, audit logs, conversation history, and redacted replay exports.
+- **Safe extensibility:** Local plugins are never loaded automatically and must be explicitly enabled.
+- **Optional browser tools:** Playwright-based browser actions with public-network URL restrictions.
+
+## Install
+
+Requirements: Node.js `18.18` or newer.
+
+```bash
+npm install -g xex-agent-cli
+xex --help
+```
+
+For development from source:
+
+```bash
+git clone https://github.com/darshanjain-entrepreneur/xex-agent-cli.git
+cd xex-agent-cli
 npm install
-copy .env.example .env   # Windows; edit the key
 npm run build
 ```
 
-Set `COMPUTER_AGENT_PROVIDER` once in `.env` along with that provider's key. This becomes the default for every command, so users do not need to repeat `--provider`. The command-line `--provider` option and config-file provider override it.
+## Quick start
+
+Configure a provider key as an environment variable, then run a prompt:
+
+```bash
+xex "Inspect this project and explain its structure"
+```
+
+Start the interactive terminal session:
+
+```bash
+xex
+```
+
+Type `/exit` to leave the session.
+
+### Provider configuration
+
+Provider selection uses this precedence:
+
+1. `--provider`
+2. JSON config file
+3. `COMPUTER_AGENT_PROVIDER`
+4. `openrouter`
+
+#### OpenRouter
+
+```env
+COMPUTER_AGENT_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_key_here
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+#### OpenAI
 
 ```env
 COMPUTER_AGENT_PROVIDER=openai
@@ -18,40 +78,145 @@ OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini
 ```
 
-The provider tries the configured model first and falls back to available OpenRouter models when a model is retired or unavailable.
+#### Anthropic
 
-## Usage
-
-```sh
-npm start "Inspect the project and explain its structure"
-npm start -- --help
-npm start -- --cwd C:\work --model anthropic/claude-3.5-sonnet "Review files"
-npm start                  # interactive REPL; /exit quits
+```env
+COMPUTER_AGENT_PROVIDER=anthropic
+ANTHROPIC_API_KEY=your_key_here
+ANTHROPIC_MODEL=claude-3-5-sonnet-latest
 ```
 
-Options include `--provider`, `--base-url`, `--stream`, `--approval` (`prompt`, `safe`, `session`, `trusted`), `--history`, `--audit`, `--config`, `--diagnostics`, and `--list-plugins`. Trust controls include `--timeline` (a redacted action timeline and safe/approved/blocked/reversed summary), `--explain` (show a plan and obtain confirmation before each model tool action), `--privacy strict|warn` (block or redact secret-like tool inputs), `--task-undo` (enable the `undo_task` rollback tool), and `--replay-export file.json` (write a shareable, secret-free task replay). Set `COMPUTER_AGENT_PROVIDER` in `.env` to avoid repeating `--provider`. JSON config files are validated (unknown values are rejected) and command-line values take precedence.
+#### Gemini
 
-Available tools include file operations (`create`, `edit`, `copy`, `move`, `delete`), git inspection, `project_check`, undo, and text search. Writes are audit-recorded when `--audit` is supplied and snapshots are kept for safe undo within the session. Files are restricted to the cwd (or repeated `--allowed-root` values), command output is capped, and a denylist blocks common destructive executables. Shell and deletion require both a permission approval and explicit `confirm: true`.
+```env
+COMPUTER_AGENT_PROVIDER=gemini
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-1.5-flash
+```
 
-Providers have native request adapters for OpenRouter/OpenAI-compatible APIs, Anthropic, and Gemini. Keys are read only from environment variables (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and are never printed or accepted as CLI arguments. `local`/`compatible` endpoints can be used without a key when `--base-url` is supplied.
+#### Local or compatible servers
 
-Browser tools (`browser_open`, `browser_read`, `browser_click`, `browser_type`, and `browser_screenshot`) are optional and capability-detected. Install Playwright separately (`npm install playwright`) to enable them; no browser is downloaded by this package. Browser URLs must use HTTP(S) and resolve to public addresses; localhost, private/link-local/reserved networks, embedded credentials, and metadata endpoints are blocked. Redirect/resource validation should be treated as an additional defense, not a hostile-browser sandbox. Screenshots stay inside configured roots, and missing Playwright fails closed. GUI status is reported but real mouse/keyboard control is deliberately disabled.
+```bash
+xex --provider local --base-url http://localhost:11434/v1 --model llama3.2 "Explain this project"
+```
 
-Plugins are never loaded automatically. Files in `.computer-agent/plugins` can be listed safely with `xex --list-plugins`; they are only imported after an explicit `--enable-plugin plugin.mjs` option. Plugin JavaScript runs with the user's full Node.js privileges, so only enable code you trust. A local JavaScript plugin can be copied and validated with `--install-plugin path\to\plugin.mjs`; URLs, duplicate names, and invalid plugins are rejected.
+Keys are read from environment variables only. Never commit `.env`, place API keys in prompts, or pass secrets as command-line arguments. Use [.env.example](./.env.example) as the starting template.
 
-Use `--browser-check` for a no-download Playwright capability check. If Playwright is installed but its browser binary is missing, install only the required browser through Playwright's own installer; this package never downloads one automatically. Provider adapters are covered by mocked-fetch tests for OpenRouter, OpenAI, Anthropic, Gemini, and local-compatible endpoints; tests never require network access or real keys.
+## Common commands
 
-Conversation history is validated before loading and written atomically with restrictive permissions where supported. Sensitive values are redacted before history, replay, timeline, or permission display. `--search-history text` searches valid JSON histories below the selected cwd and ignores malformed files. `--progress` writes provider/tool activity to stderr, preserving clean one-shot response output. Git tools include staged-diff and commit-review inspection; commits never stage files implicitly and still require explicit confirmation.
+```bash
+# Choose a provider and working directory
+xex --provider openai --cwd ./my-project "Find the main entry point"
 
-The agent can execute commands and modify files on the local computer. Review every confirmation carefully; dangerous actions such as deletion, shell execution, commits, and branch changes require explicit confirmation. `--diagnostics` reports whether a real OS sandbox is active; this application never pretends that path allowlists are an OS sandbox. Use an external container, VM, or OS sandbox for hostile prompts.
+# Ask for approval before risky actions
+xex --approval prompt "Update the tests and run them"
+
+# Explain every model-selected tool action first
+xex --explain "Refactor the configuration module"
+
+# Strictly block secret-like tool inputs
+xex --privacy strict "Check this configuration"
+
+# Show a redacted action timeline and trust summary
+xex --timeline --progress "Review the project"
+
+# Enable task-level rollback and export a redacted replay
+xex --task-undo --replay-export replay.json "Make the requested changes"
+
+# Inspect capabilities without making model requests
+xex --diagnostics
+xex --browser-check
+xex --list-plugins
+```
+
+Run `xex --help` for the complete option list.
+
+## Safety model
+
+xex is a local tool-running agent, not an OS sandbox. Use an external container, VM, or native supervisor for untrusted prompts or hostile code.
+
+- File access is restricted to the current directory by default. Add approved roots with `--allowed-root`.
+- Destructive operations and shell execution require explicit confirmation and permission approval.
+- Processes have timeouts and capped output.
+- Secret-like values are blocked in `strict` privacy mode and redacted in `warn` mode.
+- History, timelines, audit records, and replay exports redact sensitive values.
+- Browser access is optional and blocks localhost, private, link-local, reserved, metadata, and embedded-credential destinations.
+- GUI mouse and keyboard automation is disabled.
+
+### Plugins
+
+Plugins are JavaScript and run with the full privileges of the current user. They are **never loaded automatically**.
+
+```bash
+xex --list-plugins
+xex --install-plugin path/to/plugin.mjs
+xex --enable-plugin plugin.mjs "Use the plugin"
+```
+
+Only enable plugins you have reviewed and trust. Plugin listing does not execute plugin code.
+
+### Browser tools
+
+Browser tools are optional. Install Playwright separately:
+
+```bash
+npm install playwright
+```
+
+Browser binaries are not downloaded automatically. Use `xex --browser-check` to check availability. Browser actions include opening, reading, clicking, typing, and screenshots, subject to the network and filesystem safety policies above.
+
+## Available capabilities
+
+| Area | Capabilities |
+| --- | --- |
+| Files | Create, read, write, edit, copy, move, delete, list, search |
+| Processes | Run processes and shell commands with approval and limits |
+| Projects | Git inspection, project checks, staged-diff and commit review |
+| Trust | Approvals, explain mode, timelines, progress, audit, replay |
+| Recovery | File undo and task-level undo |
+| Privacy | Secret detection, redaction, strict blocking |
+| Providers | OpenRouter, OpenAI, Anthropic, Gemini, local-compatible |
+| Extensibility | Explicitly enabled local plugins |
+| Browser | Optional Playwright actions with public-network restrictions |
 
 ## Development
 
-```sh
+```bash
+npm install
 npm run build
+npm run typecheck
 npm test
-npm install -g .
-xex --help
+npm audit --omit=dev
+npm pack --dry-run
 ```
 
-`--stream` uses provider streaming for final text responses and safely falls back to normal completion when tools are available, because tool-call delta formats vary by provider. SSE chunks are buffered across network boundaries. Conversation files can be resumed and searched programmatically, and failed multi-file operations roll back snapshots where practical. The `browser_open` tool is optional: install `playwright` to enable it, otherwise it returns a clear missing-dependency result. `gui_status` reports that GUI control is not enabled in this MVP.
+The test suite uses mocked provider responses and local temporary directories; live provider credentials are not required for tests.
+
+## Known limitations
+
+- OS-level sandboxing is not provided by the application.
+- GUI automation is intentionally disabled.
+- Browser automation requires the optional Playwright dependency and browser binaries.
+- Live provider calls require your own credentials, quota, and network access.
+- Shell command behavior varies across Windows, macOS, and Linux.
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening a pull request:
+
+1. Run the build, typecheck, and test commands.
+2. Do not include `.env`, API keys, history files, logs, or generated secrets.
+3. Document security-sensitive behavior and add regression tests.
+
+Please report suspected security vulnerabilities privately rather than publishing exploit details in a public issue.
+
+## License
+
+This project is released under the [MIT License](./LICENSE).
+
+## Author
+
+**Darshan Jain**
+
+- GitHub: [@darshanjain-entrepreneur](https://github.com/darshanjain-entrepreneur)
+- Project: [xex-agent-cli](https://github.com/darshanjain-entrepreneur/xex-agent-cli)
