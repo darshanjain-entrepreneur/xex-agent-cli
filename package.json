@@ -1,0 +1,27 @@
+{
+  "name": "xex-agent-cli",
+  "version": "0.1.0",
+  "description": "A strict TypeScript terminal coding agent with trust-focused controls and OpenAI-compatible providers",
+  "type": "module",
+  "bin": {
+    "xex": "dist/cli.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "engines": { "node": ">=18.18" },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}
