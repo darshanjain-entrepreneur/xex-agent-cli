@@ -38,7 +38,46 @@ npm run build
 
 ## Quick start
 
-Configure a provider key as an environment variable, then run a prompt:
+### 1. Create your `.env` file
+
+Create a file named `.env` in the folder where you run `xex` (normally your project folder). Start from the included template:
+
+**Windows PowerShell:**
+
+```powershell
+Copy-Item .env.example .env
+```
+
+**macOS/Linux:**
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and fill in the settings for one provider. For example, with OpenRouter:
+
+```env
+COMPUTER_AGENT_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+```
+
+Replace `your_openrouter_api_key` with your real key. Do not add quotes unless your key requires them, and never commit `.env` to GitHub. The `.gitignore` file already excludes it.
+
+For OpenAI, use this pattern instead:
+
+```env
+COMPUTER_AGENT_PROVIDER=openai
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
+```
+
+For Anthropic or Gemini, use the matching examples in the [Provider configuration](#provider-configuration) section. Only configure the provider you intend to use.
+
+### 2. Run xex
+
+After creating `.env`, configure a provider key as an environment variable, then run a prompt:
 
 ```bash
 xex "Inspect this project and explain its structure"
@@ -53,6 +92,8 @@ xex
 Type `/exit` to leave the session.
 
 ### Provider configuration
+
+The `.env` file should be placed in the current working directory from which you run `xex`. `xex` loads it automatically. If you run `xex` from a different project folder, copy that folder's `.env.example` there and create a new `.env`, or set the variables in your shell.
 
 Provider selection uses this precedence:
 
